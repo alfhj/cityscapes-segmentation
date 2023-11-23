@@ -1,17 +1,15 @@
 from glob import glob
 
-import matplotlib
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from unet_dataset import MyDataset
+from datetime import datetime
 
 from unet_model import UNet
 from unet_utils import upload_image
-
-matplotlib.use("Qt5agg")
 
 import matplotlib.pyplot as plt
 import wandb
@@ -19,8 +17,10 @@ import wandb
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(torch.__version__)
 print(device)
+print([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
 
-batch_size = 4
+runid = datetime.now().strftime(r"%y%m%d_%H%M%S")
+batch_size = 2
 batch_size_val = 1
 epochs = 50
 lr = 0.01
@@ -44,14 +44,14 @@ w = 2048
 # with open(__file__) as f:
 #     wandb.save(f.name, policy="now")
 
-train_path = glob('data/leftImg8bit/train/*/*leftImg8bit.png')#[:100]
-vaild_path = glob('data/leftImg8bit/val/*/*leftImg8bit.png')#[:100]
+train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/leftImg8bit_trainvaltest/leftImg8bit/train/*/*leftImg8bit.png')#[:100]
+vaild_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/leftImg8bit_trainvaltest/leftImg8bit/val/*/*leftImg8bit.png')#[:100]
 
-gt_train_path = glob('data/gtFine/train/*/*gtFine_color.png')
-gt_valid_path = glob('data/gtFine/val/*/*gtFine_color.png')
+gt_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_color.png')
+gt_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_color.png')
 
-instance_train_path = glob('data/gtFine/train/*/*labelIds.png')
-instance_valid_path = glob('data/gtFine/val/*/*labelIds.png')
+#instance_train_path = glob('data/gtFine/train/*/*labelIds.png')
+#instance_valid_path = glob('data/gtFine/val/*/*labelIds.png')
 
 log_dir = "logs"  # Specify the directory where logs will be stored
 
@@ -168,12 +168,14 @@ for i in range(epochs):
     print("epoch : {} ,train loss : {} ,valid loss : {} ".format(i,train_loss[-1],val_loss[-1]))
     
     imgs = upload_image(img, output, label)
+    names = ["img", "out", "lab"]
     for k in range(len(imgs)):
-        ax[k].imshow(np.array(imgs[k].image))
+        #ax[k].imshow(np.array(imgs[k].image))
+        imgs[k].image.save(f"output/{runid}_{names[k]}.png")
         #imgs[i].image.show()
-    fig.canvas.draw()
-    fig.canvas.flush_events()
-    fig.show()
+#    fig.canvas.draw()
+#    fig.canvas.flush_events()
+#    fig.show()
     # wandb.log({
     #     "val_loss": val_loss[-1],
     #     "train_loss": train_loss[-1],
