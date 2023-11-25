@@ -5,6 +5,7 @@ from torchvision import transforms
 import bz2
 import os
 import pickle
+import numpy as np
 
 h, w = 1024, 2048
 
@@ -52,14 +53,23 @@ transform_label = transforms.Compose([
 
 class MyDataset(Dataset):
     def __init__(self, name, images, ground_truth):
+
         self.name = name
         self.image_paths = images
         self.ground_truth = ground_truth
         self.cached_data = {}
         self.loaded_pickle = False
         #if os.path.exists("cached_data.pkl"):
-        #    self.load_pickle()
+        #    self._load_pickle()
+        self._pixel_to_class = np.array([-1, -1, -1, -1, -1, -1, -1, -1, 0, 1, -1, -1, 2, 3, 4, -1, -1, -1, 5, -1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 16, 17, 18])
+        self._mapping = np.array(range(-1, len(self._pixel_to_class) - 1)).astype("int32")
 
+    def _class_to_index(self, mask):
+        if mask.max() > 35:
+            return mask
+        index = np.digitize(mask.ravel(), self._mapping, right=True)
+        return self._key[index].reshape(mask.shape)
+    
     def __len__(self):
         return len(self.image_paths)
 
@@ -85,16 +95,16 @@ class MyDataset(Dataset):
 
 
         #if not self.loaded_pickle and len(self.cached_data) == len(self.image_paths):
-        #    self.save_pickle()
+        #    self._save_pickle()
         
         return raw_img, ground_truth_img
     
-    def load_pickle(self):
+    def _load_pickle(self):
         with bz2.BZ2File(f"{self.name}.pbz2", "r") as pkl:
             self.cached_data = pickle.load(pkl)
         self.loaded_pickle = True
      
-    def save_pickle(self):
+    def _save_pickle(self):
         with bz2.BZ2File(f"{self.name}.pbz2", "w") as pkl:
             pickle.dump(self.cached_data, pkl)
         self.loaded_pickle = True

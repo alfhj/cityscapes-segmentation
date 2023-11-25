@@ -45,25 +45,13 @@ if __name__ == "__main__":
     # with open(__file__) as f:
     #     wandb.save(f.name, policy="now")
 
-    train_path = glob('data/leftImg8bit/train/*/*leftImg8bit.png')#[:100]
-    vaild_path = glob('data/leftImg8bit/val/*/*leftImg8bit.png')#[:100]
-
+    train_path = glob('data/leftImg8bit/train/*/*leftImg8bit.png')
+    vaild_path = glob('data/leftImg8bit/val/*/*leftImg8bit.png')
     gt_train_path = glob('data/gtFine/train/*/*gtFine_color.png')
     gt_valid_path = glob('data/gtFine/val/*/*gtFine_color.png')
-
-    instance_train_path = glob('data/gtFine/train/*/*labelIds.png')
-    instance_valid_path = glob('data/gtFine/val/*/*labelIds.png')
-
-    log_dir = "logs"  # Specify the directory where logs will be stored
-
-    #writer = SummaryWriter(log_dir)
-    #label_train_path = glob(r'C:\Miniprojekt\Basic\Data\train\*'+ '/*.json')
-    #label_valid_path = glob(r'C:\Miniprojekt\Basic\Data\valid\*'+ '/*.json')
-
+    gt_gray_train_path = glob('data/gtFine/train/*/*labelIds.png')
+    gt_gray_valid_path = glob('data/gtFine/val/*/*labelIds.png')
     assert len(gt_train_path) > 0
-
-    train_dataset = []
-    validation_dataset = []
 
     ### Calculate means
     """
@@ -85,8 +73,8 @@ if __name__ == "__main__":
     round_to = lambda x, mod: int(round(x/mod)*mod)
 
     ### Create instances of your dataset for training and validation
-    train_data = MyDataset("train", train_path, gt_train_path)
-    val_data = MyDataset("val", vaild_path, gt_valid_path)
+    train_data = MyDataset("train", train_path, gt_gray_train_path)
+    val_data = MyDataset("val", vaild_path, gt_gray_valid_path)
 
     ### Creating the DataLoaders
     train_loader = DataLoader(train_data, batch_size, shuffle=True, num_workers=0)

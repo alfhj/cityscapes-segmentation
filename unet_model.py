@@ -20,7 +20,6 @@ class Convblock(nn.Module):
         return x
 
 class UNet(nn.Module):
-
     def __init__(self,input_channel,retain=True):
         super().__init__()
 
