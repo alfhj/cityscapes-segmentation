@@ -1,3 +1,4 @@
+from datetime import datetime
 from glob import glob
 
 import matplotlib
@@ -20,8 +21,10 @@ if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(torch.__version__)
     print(device)
+    print([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
 
-    batch_size = 4
+    runid = datetime.now().strftime(r"%y%m%d_%H%M%S")
+    batch_size = 1
     batch_size_val = 1
     epochs = 50
     lr = 0.01
@@ -45,12 +48,13 @@ if __name__ == "__main__":
     # with open(__file__) as f:
     #     wandb.save(f.name, policy="now")
 
-    train_path = glob('data/leftImg8bit/train/*/*leftImg8bit.png')
-    vaild_path = glob('data/leftImg8bit/val/*/*leftImg8bit.png')
+    train_path = glob('data/leftImg8bit/train/*/*leftImg8bit.png')#[:100]
+    vaild_path = glob('data/leftImg8bit/val/*/*leftImg8bit.png')#[:100]
     gt_train_path = glob('data/gtFine/train/*/*gtFine_color.png')
     gt_valid_path = glob('data/gtFine/val/*/*gtFine_color.png')
-    gt_gray_train_path = glob('data/gtFine/train/*/*labelIds.png')
-    gt_gray_valid_path = glob('data/gtFine/val/*/*labelIds.png')
+    instance_train_path = glob('data/gtFine/train/*/*labelIds.png')
+    instance_valid_path = glob('data/gtFine/val/*/*labelIds.png')
+
     assert len(gt_train_path) > 0
 
     ### Calculate means
@@ -73,15 +77,15 @@ if __name__ == "__main__":
     round_to = lambda x, mod: int(round(x/mod)*mod)
 
     ### Create instances of your dataset for training and validation
-    train_data = MyDataset("train", train_path, gt_gray_train_path)
-    val_data = MyDataset("val", vaild_path, gt_gray_valid_path)
+    train_data = MyDataset("train", train_path, gt_train_path)
+    val_data = MyDataset("val", vaild_path, gt_valid_path)
 
     ### Creating the DataLoaders
-    train_loader = DataLoader(train_data, batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_data, batch_size_val, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=4)
 
     ### initializing the model
-    model = UNet(3).float().to(device)
+    model = UNet(input_dim=3, output_dim=3).float().to(device)
     #checkpoint = torch.load('weights/unetsegment_final.pt')
     #model.load_state_dict(checkpoint['model_state_dict'])
     lossfunc = nn.MSELoss()
@@ -111,6 +115,7 @@ if __name__ == "__main__":
             step += 1
             if step in steps:
                 steps.remove(step)
+                print(steps)
                 break
 
             optimizer.zero_grad()
@@ -124,10 +129,6 @@ if __name__ == "__main__":
             optimizer.step()
             trainloss += loss.item()
 
-            #if(i%5==0):
-            #show_image(img,output,label)
-            # Log training loss for this epoch
-            #writer.add_scalar("Training Loss", avg_train_loss, epoch)
 
         #train_loss.append(trainloss/len(train_loader))
         train_loss.append(trainloss/j)
@@ -141,11 +142,12 @@ if __name__ == "__main__":
             if j > 10:
                 break
 
-            img = img_in.to(device)
-            label = label_in.to(device)
-            output = model(img)
-            loss = lossfunc(output, label)
-            valloss += loss.item()
+            with torch.no_grad():
+                img = img_in.to(device)
+                label = label_in.to(device)
+                output = model(img)
+                loss = lossfunc(output, label)
+                valloss += loss.item()
 
         #val_loss.append(valloss/len(val_loader))
         val_loss.append(valloss/j)
@@ -153,7 +155,9 @@ if __name__ == "__main__":
         print("epoch : {} ,train loss : {} ,valid loss : {} ".format(i,train_loss[-1],val_loss[-1]))
         
         imgs = upload_image(img, output, label)
+        names = ["img", "out", "lab"]
         for k in range(len(imgs)):
+            imgs[k].image.save(f"output/{runid}_e{i+1}_{names[k]}.png")
             ax[k].imshow(np.array(imgs[k].image))
             #imgs[i].image.show()
         fig.canvas.draw()
@@ -170,12 +174,12 @@ if __name__ == "__main__":
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'loss': train_loss[-1],
-        }, f"weights/unetsegment_checkpoint_{i}.pt")
+        }, f"weights/unetsegment_{runid}_checkpoint_{i}.pt")
 
     torch.save({
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
         'loss': train_loss[-1],
-    }, f"weights/unetsegment_final.pt")
+    }, f"weights/unetsegment_{runid}_final.pt")
 
     wandb.finish()

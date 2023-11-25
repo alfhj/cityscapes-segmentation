@@ -1,4 +1,6 @@
+/__pycache__
+.venv
 /data
 /weights
-/__pycache__
 /misc
+/output
