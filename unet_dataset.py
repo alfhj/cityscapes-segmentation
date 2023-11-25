@@ -23,7 +23,7 @@ transform_common = transforms.Compose([
 ])
 
 transform_img = transforms.Compose([
-    transforms.Normalize(mean=0, std=255),
+    #transforms.Normalize(mean=0, std=255),
     transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
     #transforms.Normalize(mean=means, std=stds),
 ])
@@ -59,8 +59,8 @@ class MyDataset(Dataset):
         self.name = name
         self.image_paths = images
         self.ground_truth = ground_truth
-        self.cached_data = {}
-        self.loaded_pickle = False
+        #self.cached_data = {}
+        #self.loaded_pickle = False
         #if os.path.exists("cached_data.pkl"):
         #    self.load_pickle()
 
@@ -77,7 +77,7 @@ class MyDataset(Dataset):
             ground_truth_img = transform_common(ground_truth_img)
             #raw_img.to("cuda")
             #ground_truth_img.to("cuda")
-            self.cached_data[idx] = (raw_img, ground_truth_img)
+            #self.cached_data[idx] = (raw_img, ground_truth_img)
         else:
             raw_img, ground_truth_img = self.cached_data[idx]
         

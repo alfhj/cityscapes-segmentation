@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     ### Creating the DataLoaders
     train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=0)
 
     ### initializing the model
     model = UNet(input_dim=3, output_dim=3).float().to(device)
