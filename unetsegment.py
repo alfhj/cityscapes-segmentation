@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
 
     runid = datetime.now().strftime(r"%y%m%d_%H%M%S")
-    batch_size = 1
+    batch_size = 4
     batch_size_val = 1
     epochs = 50
     lr = 0.001
@@ -77,15 +77,16 @@ if __name__ == "__main__":
     round_to = lambda x, mod: int(round(x/mod)*mod)
 
     ### Create instances of your dataset for training and validation
-    train_data = CityscapesDataset("train", train_path, gt_gray_train_path)
-    val_data = CityscapesDataset("val", vaild_path, gt_gray_valid_path)
+    train_data = CityscapesDataset("train", train_path, gt_gray_train_path, group_labels=True)
+    val_data = CityscapesDataset("val", vaild_path, gt_gray_valid_path, group_labels=True)
 
     ### Creating the DataLoaders
-    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=8)
     val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=0)
 
     ### initializing the model
     model = UNet(input_dim=3, output_dim=train_data.num_classes).float().to(device)
+    print(f"Model weights: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
     #checkpoint = torch.load("weights/unetsegment_final.pt")
     #model.load_state_dict(checkpoint["model_state_dict"])
     lossfunc = nn.CrossEntropyLoss()
@@ -99,7 +100,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(1, 3, figsize=(20, 5))
     steps = [10, 40, 100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 2500]
-    for i in range(epochs):
+    for epoch in range(1, epochs+1):
         trainloss = 0
         valloss = 0
         j = -1
@@ -115,7 +116,6 @@ if __name__ == "__main__":
             step += 1
             if step in steps:
                 steps.remove(step)
-                print(steps)
                 break
 
             optimizer.zero_grad()
@@ -152,7 +152,7 @@ if __name__ == "__main__":
         #val_loss.append(valloss/len(val_loader))
         val_loss.append(valloss/j)
         #writer.add_scalar("Validation Loss", val_loss / len(valid_loader), i)
-        print("epoch : {} ,train loss : {} ,valid loss : {} ".format(i,train_loss[-1],val_loss[-1]))
+        print("epoch : {} ,train loss : {} ,valid loss : {} ".format(epoch, train_loss[-1], val_loss[-1]))
         
         output = val_data.classes_to_rgb(output)
         label = val_data.classes_to_rgb(label)
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         imgs = upload_image(img, output, label)
         names = ["img", "out", "lab"]
         for k in range(len(imgs)):
-            imgs[k].image.save(f"output/{runid}_e{i+1}_{names[k]}.png")
+            imgs[k].image.save(f"output/{runid}_e{epoch}_{names[k]}.png")
             ax[k].imshow(np.array(imgs[k].image))
             #imgs[i].image.show()
         fig.canvas.draw()
@@ -173,16 +173,10 @@ if __name__ == "__main__":
         # })
 
         torch.save({
-            "epoch": i,
+            "epoch": epoch,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": train_loss[-1],
-        }, f"weights/unetsegment_{runid}_checkpoint_{i}.pt")
-
-    torch.save({
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-        "loss": train_loss[-1],
-    }, f"weights/unetsegment_{runid}_final.pt")
+        }, f"weights/unetsegment_{runid}_checkpoint_{epoch+1}.pt")
 
     wandb.finish()

@@ -13,7 +13,7 @@ import pickle
 h, w = 1024, 2048
 
 transform_common = transforms.Compose([
-    #transforms.Resize((h//2, w//2), antialias=True),
+    transforms.Resize((h//4, w//4), antialias=True),
     #transforms.RandomHorizontalFlip(p=0.5),
     #transforms.RandomCrop()
     #transforms.RandomVerticalFlip(p=0.5),
@@ -139,8 +139,12 @@ class CityscapesDataset(Dataset):
         # Input: (H, W), values: 0-num_classes
         # Output: (num_classes, H, W)
         output = torch.zeros((self.num_classes, *gt.shape))
-        for label in labels:
-            output[label.id] = torch.Tensor(gt == label.id)
+        if self.group_labels:
+            for group in grouped_labels:
+                output[group.id] = torch.Tensor(np.isin(gt, group.ids))
+        else:
+            for label in labels:
+                output[label.id] = torch.Tensor(gt == label.id)
         return output
     
     def classes_to_rgb(self, output: torch.Tensor) -> torch.Tensor:
@@ -148,7 +152,7 @@ class CityscapesDataset(Dataset):
         # Output: (3, H, W)
         rgb = torch.zeros((3, *output.size()[-2:]))
         output_max = torch.argmax(output.squeeze(), dim=0)
-        for label in labels:
+        for label in (grouped_labels if self.group_labels else labels):
             for c in range(3):
                 rgb[c][output_max == label.id] = label.color[c] / 255
         return rgb
@@ -239,11 +243,11 @@ GroupedLabel = namedtuple("GroupedLabel", [
     "color", # color of the group
 ])
 grouped_labels = [
-    Label(0, "motor vehicles" , [26, 27, 28, 28, 29, 30, 31, 32],     (  0,   0, 142)),
-    Label(1, "pedestrians"    , [24, 25, 33],                         (220,  20,  60)),
-    Label(2, "road"           , [6, 7, 8, 9, 10],                     (128,  64, 128)),
-    Label(3, "traffic objects", [17, 18, 19, 20],                     (250, 170,  30)),
-    Label(4, "background"     , [11, 12, 13, 14, 15, 16, 21, 22, 23], ( 70,  70,  70)),
-    Label(5, "void"           , [0, 2, 3, 4, 5],                      (  0,   0,   0)),
-    Label(6, "ego vehicle"    , [1],                                  (  0,   0,   0)),
+    GroupedLabel(0, "motor vehicles" , [26, 27, 28, 28, 29, 30, 31, 32],           (  0,   0, 142)),
+    GroupedLabel(1, "pedestrians"    , [24, 25, 33],                               (220,  20,  60)),
+    GroupedLabel(2, "road"           , [6, 7, 8, 9, 10],                           (128,  64, 128)),
+    GroupedLabel(3, "traffic objects", [17, 18, 19, 20],                           (250, 170,  30)),
+    GroupedLabel(4, "background"     , [4, 5, 11, 12, 13, 14, 15, 16, 21, 22, 23], ( 70,  70,  70)),
+    GroupedLabel(5, "void"           , [0, 2, 3],                                  (  0,   0,   0)),
+    GroupedLabel(6, "ego vehicle"    , [1],                                        (  0,   0,   0)),
 ]
