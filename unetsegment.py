@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
 
     runid = datetime.now().strftime(r"%y%m%d_%H%M%S")
-    batch_size = 4
+    batch_size = 1
     batch_size_val = 1
     epochs = 50
     lr = 0.001
@@ -54,24 +54,15 @@ if __name__ == "__main__":
     gt_valid_path = glob("data/gtFine/val/*/*gtFine_color.png")
     gt_gray_train_path = glob("data/gtFine/train/*/*labelIds.png")
     gt_gray_valid_path = glob("data/gtFine/val/*/*labelIds.png")
-
+    """
+    train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/leftImg8bit_trainvaltest/leftImg8bit/train/*/*leftImg8bit.png')#[:100]
+    vaild_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/leftImg8bit_trainvaltest/leftImg8bit/val/*/*leftImg8bit.png')#[:100]
+    gt_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_color.png')
+    gt_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_color.png')
+    gt_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_labelIds.png')
+    gt_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_labelIds.png')
+    """
     assert len(gt_train_path) > 0
-
-    ### Calculate means
-    """
-    means = np.zeros((len(raw_train_path), 3)) + 0.5
-    stddevs = np.zeros((len(raw_train_path), 3))
-    for i, path in tqdm(enumerate(raw_train_path)):
-        img = plt.imread(path)[:, :, :3]
-        means[i] = img.mean(axis=(0, 1))
-        stddevs[i] = img.std(axis=(0, 1))
-    mean = np.mean(means, axis=0)
-    stddev = np.mean(stddevs, axis=0)
-    print(mean, stddev)
-    """
-    means = [0.28766859, 0.32577001, 0.28470659]
-    stds = [0.17583184, 0.180675, 0.17738219]
-    ###
 
     ### Define data transformations if needed 2048 X 1024
     round_to = lambda x, mod: int(round(x/mod)*mod)
@@ -81,7 +72,7 @@ if __name__ == "__main__":
     val_data = CityscapesDataset("val", vaild_path, gt_gray_valid_path, group_labels=True)
 
     ### Creating the DataLoaders
-    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=8)
+    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=4)
     val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=0)
 
     ### initializing the model

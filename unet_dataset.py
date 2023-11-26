@@ -11,11 +11,13 @@ import os
 import pickle
 
 h, w = 1024, 2048
+means = [0.28766859, 0.32577001, 0.28470659]
+stds = [0.17583184, 0.180675, 0.17738219]
 
 transform_common = transforms.Compose([
-    transforms.Resize((h//4, w//4), antialias=True),
-    #transforms.RandomHorizontalFlip(p=0.5),
-    #transforms.RandomCrop()
+    transforms.Resize((h//2, w//2), antialias=True),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomCrop((h//2-128, w//2-64))
     #transforms.RandomVerticalFlip(p=0.5),
     #transforms.RandomPerspective(p=0.5),
     #transforms.CenterCrop((1024, 1024)),
@@ -242,7 +244,7 @@ GroupedLabel = namedtuple("GroupedLabel", [
     "ids", # list of ids
     "color", # color of the group
 ])
-grouped_labels = [
+"""grouped_labels = [
     GroupedLabel(0, "motor vehicles" , [26, 27, 28, 28, 29, 30, 31, 32],           (  0,   0, 142)),
     GroupedLabel(1, "pedestrians"    , [24, 25, 33],                               (220,  20,  60)),
     GroupedLabel(2, "road"           , [6, 7, 8, 9, 10],                           (128,  64, 128)),
@@ -250,4 +252,35 @@ grouped_labels = [
     GroupedLabel(4, "background"     , [4, 5, 11, 12, 13, 14, 15, 16, 21, 22, 23], ( 70,  70,  70)),
     GroupedLabel(5, "void"           , [0, 2, 3],                                  (  0,   0,   0)),
     GroupedLabel(6, "ego vehicle"    , [1],                                        (  0,   0,   0)),
-]
+]"""
+grouped_labels = [
+    GroupedLabel(id=0, name='unlabeled', ids=[0, 1, 2, 3, 4], color=(0, 0, 0)),
+    GroupedLabel(id=1, name='dynamic', ids=[5], color=(111, 74, 0)),
+    GroupedLabel(id=2, name='ground', ids=[6], color=(81, 0, 81)),
+    GroupedLabel(id=3, name='road', ids=[7], color=(128, 64, 128)),
+    GroupedLabel(id=4, name='sidewalk', ids=[8], color=(244, 35, 232)),
+    GroupedLabel(id=5, name='parking', ids=[9], color=(250, 170, 160)),
+    GroupedLabel(id=6, name='rail track', ids=[10], color=(230, 150, 140)),
+    GroupedLabel(id=7, name='building', ids=[11], color=(70, 70, 70)),
+    GroupedLabel(id=8, name='wall', ids=[12], color=(102, 102, 156)),
+    GroupedLabel(id=9, name='fence', ids=[13], color=(190, 153, 153)),
+    GroupedLabel(id=10, name='guard rail', ids=[14], color=(180, 165, 180)),
+    GroupedLabel(id=11, name='bridge', ids=[15], color=(150, 100, 100)),
+    GroupedLabel(id=12, name='tunnel', ids=[16], color=(150, 120, 90)),
+    GroupedLabel(id=13, name='pole', ids=[17, 18], color=(153, 153, 153)),
+    GroupedLabel(id=14, name='traffic light', ids=[19], color=(250, 170, 30)),
+    GroupedLabel(id=15, name='traffic sign', ids=[20], color=(220, 220, 0)),
+    GroupedLabel(id=16, name='vegetation', ids=[21], color=(107, 142, 35)),
+    GroupedLabel(id=17, name='terrain', ids=[22], color=(152, 251, 152)),
+    GroupedLabel(id=18, name='sky', ids=[23], color=(70, 130, 180)),
+    GroupedLabel(id=19, name='person', ids=[24], color=(220, 20, 60)),
+    GroupedLabel(id=20, name='rider', ids=[25], color=(255, 0, 0)),
+    GroupedLabel(id=21, name='car', ids=[26, -1], color=(0, 0, 142)),
+    GroupedLabel(id=22, name='truck', ids=[27], color=(0, 0, 70)),
+    GroupedLabel(id=23, name='bus', ids=[28], color=(0, 60, 100)),
+    GroupedLabel(id=24, name='caravan', ids=[29], color=(0, 0, 90)),
+    GroupedLabel(id=25, name='trailer', ids=[30], color=(0, 0, 110)),
+    GroupedLabel(id=26, name='train', ids=[31], color=(0, 80, 100)),
+    GroupedLabel(id=27, name='motorcycle', ids=[32], color=(0, 0, 230)),
+    GroupedLabel(id=28, name='bicycle', ids=[33], color=(119, 11, 32))
+ ]
