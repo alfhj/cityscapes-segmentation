@@ -1,34 +1,36 @@
 
 from collections import namedtuple
+import random
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from torchvision import transforms
+from torchvision import transforms as T
+import torchvision.transforms.functional as TF
 from PIL import Image
 import bz2
 import os
 import pickle
 
-h, w = 1024, 2048
+H, W = 1024, 2048
 means = [0.28766859, 0.32577001, 0.28470659]
 stds = [0.17583184, 0.180675, 0.17738219]
 
-transform_common = transforms.Compose([
-    transforms.Resize((h//2, w//2), antialias=True),
-    transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomCrop((h//2-128, w//2-64))
-    #transforms.RandomVerticalFlip(p=0.5),
-    #transforms.RandomPerspective(p=0.5),
-    #transforms.CenterCrop((1024, 1024)),
-    #transforms.Resize((512, 512), antialias=True)
+transform_common = T.Compose([
+    T.Resize((H//2, W//2), antialias=True),
+    T.RandomHorizontalFlip(p=0.5),
+    T.RandomCrop((H//2-128, W//2-64))
+    #T.RandomVerticalFlip(p=0.5),
+    #T.RandomPerspective(p=0.5),
+    #T.CenterCrop((1024, 1024)),
+    #T.Resize((512, 512), antialias=True)
 ])
 
-transform_img = transforms.Compose([
-    transforms.ToTensor(),
-    #transforms.Normalize(mean=0, std=255),
-    #transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-    #transforms.Normalize(mean=means, std=stds),
+transform_img = T.Compose([
+    T.ToTensor(),
+    #T.Normalize(mean=0, std=255),
+    T.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+    #T.Normalize(mean=means, std=stds),
 ])
 
 """
@@ -49,9 +51,9 @@ transform_val = A.Compose([
 
 
 """
-transform_label = transforms.Compose([
-    transforms.ToTensor(),
-    #transforms.CenterCrop((1024, 1024)),
+transform_label = T.Compose([
+    T.ToTensor(),
+    #T.CenterCrop((1024, 1024)),
     #transform.Resize((512, 512))
     #transform.Resize((h//2, w//2)),
 ]) # You can define transformations for labels if necessary
@@ -122,20 +124,40 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, idx):
         raw_path = self.image_paths[idx]
         gt_path = raw_path.replace("leftImg8bit", "gtFine").replace(".png", "_labelIds.png")
-        raw_img = Image.open(raw_path).convert("RGB")
-        ground_truth_img = Image.open(gt_path).convert("L")
-        raw_img = transform_common(raw_img)
-        ground_truth_img = self.gt_to_classes(np.array(ground_truth_img))
-        ground_truth_img = transform_common(ground_truth_img)
+        img = Image.open(raw_path).convert("RGB")
+        gt = Image.open(gt_path).convert("L")
+
+        ### Augment
+        #raw_img = transform_common(raw_img)
+        #raw_img = transform_img(raw_img)
+        #ground_truth_img = transform_common(ground_truth_img)
+
+        img = TF.resize(img, (H//2, W//2), interpolation=Image.BILINEAR)
+        gt = TF.resize(gt, (H//2, W//2), interpolation=Image.BILINEAR)
+
+        if random.random() > 0.5:
+            i, j, h, w = T.RandomCrop.get_params(img, output_size=(H//2 - 128, W//2 - 64))
+            img = TF.crop(img, i, j, h, w)
+            gt = TF.crop(gt, i, j, h, w)
+
+        if random.random() > 0.5:
+            img = TF.hflip(img)
+            gt = TF.hflip(gt)
+        
+        img = T.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)(img)
+        ###
+
+        img = TF.to_tensor(img)
+        gt = self.gt_to_classes(np.array(gt))
+        
 
         #transformed = self.transform_img(image=raw_img, mask=ground_truth_img)
         #raw_img = transformed["image"]
         #ground_truth_img = transformed["mask"]
         #raw_img = self.transform_common(raw_img)
-        raw_img = transform_img(raw_img)
         #ground_truth_img = self.transform_common(ground_truth_img)
         
-        return raw_img, ground_truth_img
+        return img, gt
 
     def gt_to_classes(self, gt: np.ndarray) -> torch.Tensor:
         # Input: (H, W), values: 0-num_classes

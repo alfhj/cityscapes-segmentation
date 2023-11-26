@@ -12,7 +12,7 @@ from unet_dataset import CityscapesDataset, MyDataset
 from unet_model import UNet
 from unet_utils import upload_image
 
-matplotlib.use("Qt5agg")
+#matplotlib.use("Qt5agg")
 
 import matplotlib.pyplot as plt
 import wandb
@@ -59,10 +59,10 @@ if __name__ == "__main__":
     vaild_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/leftImg8bit_trainvaltest/leftImg8bit/val/*/*leftImg8bit.png')#[:100]
     gt_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_color.png')
     gt_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_color.png')
-    gt_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_labelIds.png')
-    gt_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_labelIds.png')
+    gt_gray_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_labelIds.png')
+    gt_gray_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_labelIds.png')
     """
-    assert len(gt_train_path) > 0
+    assert len(gt_gray_train_path) > 0
 
     ### Define data transformations if needed 2048 X 1024
     round_to = lambda x, mod: int(round(x/mod)*mod)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     val_data = CityscapesDataset("val", vaild_path, gt_gray_valid_path, group_labels=True)
 
     ### Creating the DataLoaders
-    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=4)
+    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=0)
 
     ### initializing the model
@@ -91,6 +91,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(1, 3, figsize=(20, 5))
     steps = [10, 40, 100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 2500]
+    #steps = [200, 800]
     for epoch in range(1, epochs+1):
         trainloss = 0
         valloss = 0
