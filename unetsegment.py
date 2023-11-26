@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
 
     runid = datetime.now().strftime(r"%y%m%d_%H%M%S")
-    batch_size = 1
+    batch_size = 4
     batch_size_val = 1
     epochs = 50
     lr = 0.001
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # )
     # with open(__file__) as f:
     #     wandb.save(f.name, policy="now")
-
+    """
     train_path = glob("data/leftImg8bit/train/*/*leftImg8bit.png")#[:100]
     vaild_path = glob("data/leftImg8bit/val/*/*leftImg8bit.png")#[:100]
     gt_train_path = glob("data/gtFine/train/*/*gtFine_color.png")
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     train_loss = []
     val_loss = []
 
-    fig, ax = plt.subplots(1, 3, figsize=(20, 5))
+    #fig, ax = plt.subplots(1, 3, figsize=(20, 5))
     steps = [10, 40, 100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 2500]
     #steps = [200, 800]
     for epoch in range(1, epochs+1):
@@ -153,11 +153,11 @@ if __name__ == "__main__":
         names = ["img", "out", "lab"]
         for k in range(len(imgs)):
             imgs[k].image.save(f"output/{runid}_e{epoch}_{names[k]}.png")
-            ax[k].imshow(np.array(imgs[k].image))
+            #ax[k].imshow(np.array(imgs[k].image))
             #imgs[i].image.show()
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-        fig.show()
+        #fig.canvas.draw()
+        #fig.canvas.flush_events()
+        #fig.show()
         # wandb.log({
         #     "val_loss": val_loss[-1],
         #     "train_loss": train_loss[-1],
