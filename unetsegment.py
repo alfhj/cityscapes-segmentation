@@ -164,6 +164,6 @@ if __name__ == "__main__":
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": train_loss[-1],
-        }, f"weights/unetsegment_{runid}_checkpoint_{epoch+1}.pt")
+        }, f"weights/unetsegment_{runid}_checkpoint_{epoch}.pt")
 
     wandb.finish()
