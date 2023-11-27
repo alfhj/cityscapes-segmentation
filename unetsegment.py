@@ -26,7 +26,7 @@ if __name__ == "__main__":
     runid = datetime.now().strftime(r"%y%m%d_%H%M%S")
     batch_size = 4
     batch_size_val = 1
-    epochs = 50
+    epochs = 1000
     lr = 0.01
     weight_decay = 0.0
     h = 1024
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     gt_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_color.png')
     gt_gray_train_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/train/*/*gtFine_labelIds.png')
     gt_gray_valid_path = glob('/cluster/projects/vc/data/ad/open/Cityscapes/gtFine_trainvaltest/gtFine/val/*/*gtFine_labelIds.png')
-    """
+    
     assert len(gt_gray_train_path) > 0
 
     ### Create instances of your dataset for training and validation
@@ -69,8 +69,8 @@ if __name__ == "__main__":
     val_data = CityscapesDataset("val", vaild_path, gt_gray_valid_path, group_labels=True)
 
     ### Creating the DataLoaders
-    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_data, batch_size, pin_memory=True, shuffle=True, num_workers=8)
+    val_loader = DataLoader(val_data, batch_size_val, pin_memory=True, shuffle=True, num_workers=8)
 
     ### initializing the model
     model = UNet(input_dim=3, output_dim=train_data.num_classes).float().to(device)
@@ -100,10 +100,10 @@ if __name__ == "__main__":
                 Traning the Model.
             """
             j += 1
-            if j in steps:
+            #if j in steps:
             #if j == 10:
-                steps.remove(j)
-                break
+                #steps.remove(j)
+                #break
 
             optimizer.zero_grad()
             img = img_in.to(device)
@@ -126,8 +126,8 @@ if __name__ == "__main__":
                 Validation of Model.
             """
             j += 1
-            if j == 10:
-                break
+            #if j == 10:
+                #break
 
             with torch.no_grad():
                 img = img_in.to(device)
