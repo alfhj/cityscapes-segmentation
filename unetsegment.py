@@ -27,7 +27,7 @@ if __name__ == "__main__":
     batch_size = 4
     batch_size_val = 1
     epochs = 50
-    lr = 0.001
+    lr = 0.01
     weight_decay = 0.0
     h = 1024
     w = 2048
@@ -64,9 +64,6 @@ if __name__ == "__main__":
     """
     assert len(gt_gray_train_path) > 0
 
-    ### Define data transformations if needed 2048 X 1024
-    round_to = lambda x, mod: int(round(x/mod)*mod)
-
     ### Create instances of your dataset for training and validation
     train_data = CityscapesDataset("train", train_path, gt_gray_train_path, group_labels=True)
     val_data = CityscapesDataset("val", vaild_path, gt_gray_valid_path, group_labels=True)
@@ -102,12 +99,10 @@ if __name__ == "__main__":
             """
                 Traning the Model.
             """
-            #if j > 10:
-            #    break
             j += 1
-            step += 1
-            if step in steps:
-                steps.remove(step)
+            if j in steps:
+            #if j == 10:
+                steps.remove(j)
                 break
 
             optimizer.zero_grad()
@@ -131,7 +126,7 @@ if __name__ == "__main__":
                 Validation of Model.
             """
             j += 1
-            if j > 10:
+            if j == 10:
                 break
 
             with torch.no_grad():
@@ -169,6 +164,6 @@ if __name__ == "__main__":
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": train_loss[-1],
-        }, f"weights/unetsegment_{runid}_checkpoint_{epoch+1}.pt")
+        }, f"weights/unetsegment_{runid}_checkpoint_{epoch}.pt")
 
     wandb.finish()

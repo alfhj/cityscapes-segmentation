@@ -16,6 +16,8 @@ H, W = 1024, 2048
 means = [0.28766859, 0.32577001, 0.28470659]
 stds = [0.17583184, 0.180675, 0.17738219]
 
+round_to = lambda x, mod: int(round(x/mod)*mod)
+
 transform_common = T.Compose([
     T.Resize((H//2, W//2), antialias=True),
     T.RandomHorizontalFlip(p=0.5),
@@ -132,14 +134,22 @@ class CityscapesDataset(Dataset):
         #raw_img = transform_img(raw_img)
         #ground_truth_img = transform_common(ground_truth_img)
 
-        img = TF.resize(img, (H//2, W//2), interpolation=Image.BILINEAR)
-        gt = TF.resize(gt, (H//2, W//2), interpolation=Image.BILINEAR)
-
-        if random.random() > 0.5:
-            i, j, h, w = T.RandomCrop.get_params(img, output_size=(H//2 - 128, W//2 - 64))
-            img = TF.crop(img, i, j, h, w)
-            gt = TF.crop(gt, i, j, h, w)
-
+        #img = TF.resize(img, (H//2, W//2), interpolation=Image.BILINEAR)
+        #gt = TF.resize(gt, (H//2, W//2), interpolation=Image.NEAREST)
+        crop_amount = min(max(random.gauss(0.2, 0.2), 0), 0.5)
+        crop_h = int(H * crop_amount)
+        crop_w = int(W * crop_amount)
+        #print(crop_h, crop_w)
+        #crop_h = H//2 - 256
+        #crop_w = W//2 - 128
+        #i, j, h, w = T.RandomCrop.get_params(img, output_size=(crop_h, crop_w))
+        i = int(min(max(random.gauss(0.2*crop_h, 0.4*crop_h), 0), crop_h))
+        j = int(min(max(random.gauss(0.2*crop_w, 0.4*crop_w), 0), crop_w))
+        img = TF.crop(img, i, j, H-crop_h, W-crop_w)
+        gt = TF.crop(gt, i, j, H-crop_h, W-crop_w)
+        img = TF.resize(img, (512, 1024), interpolation=Image.BILINEAR)
+        gt = TF.resize(gt, (512, 1024), interpolation=Image.NEAREST)
+        
         if random.random() > 0.5:
             img = TF.hflip(img)
             gt = TF.hflip(gt)
